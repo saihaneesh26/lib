@@ -3,62 +3,22 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:network_info_plus/network_info_plus.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+//import 'package:network_info_plus/network_info_plus.dart';
 import 'pdfview.dart';
+import 'login.dart';
 Future <void> main() async{ 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp('Qp'));
+  // SharedPreferences.setMockInitialValues({});
+  runApp(MyApp('QP'));
 }
 
+// ignore: must_be_immutable
 class MyApp extends StatelessWidget{
 var sideval;
 MyApp(val){
 this.sideval=val;
-}
-Widget DrawerWidget(BuildContext context)
-{
-  var list = ['new_files','books','rate us','login'];
-  var icon = [Icons.question_answer,Icons.book,Icons.rate_review,Icons.login];
-  return Container(
-        child:Drawer(
-          child: Container(
-            child: Column(children: [
-              Container(
-                padding: EdgeInsets.symmetric(vertical:20).add(EdgeInsets.fromLTRB(15, 18, 2, 1)),
-                child:Text("RIT-LIBRARY",style: TextStyle(fontSize: 50),),
-                width: double.infinity,
-                height: 140,
-                color: Colors.blue[400],
-              ),
-              Expanded(child: ListView.builder(
-                itemCount: list.length,
-                itemBuilder: (context,index){
-                  return GestureDetector(
-                    child: Container(child:Row(children: [
-                      Icon(icon[index],color: Colors.orange[400],),
-                      SizedBox(width: 5,),
-                      Text(list[index],style: TextStyle(fontSize: 24),),
-
-                    ],),padding: EdgeInsets.all(7),
-                    margin: EdgeInsets.all(2),
-                    decoration: BoxDecoration(border: Border.all(width: 1)),
-                    ),
-                    onTap: (){
-                      print("pressed ${list[index]}");
-                      sideval=list[index];
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyApp(list[index])));
-                    },
-                  );
-                },
-              ),)
-            ],),
-          ),
-          
-        ),
-    
-        );
 }
 
   Widget build(context){
@@ -68,7 +28,7 @@ Widget DrawerWidget(BuildContext context)
         drawer:DrawerWidget(context),
         appBar: AppBar(
         actions: [],
-        title: Text('Welcome'),
+        title: Text('e-LIBRARY'),
         ),
         body: Home(sideval),
         ),
@@ -76,10 +36,12 @@ Widget DrawerWidget(BuildContext context)
   }
 }
 
+// ignore: must_be_immutable
 class Home extends StatefulWidget{
   var sidebar;
+
   Home(sideval){
-    this.sidebar=FirebaseDatabase.instance.reference().child(sideval);
+    this.sidebar=sideval;
   }
   HomeState createState() {
     return HomeState(sidebar);
@@ -89,9 +51,11 @@ class Home extends StatefulWidget{
 
 class HomeState extends State<Home>{
 var _dbref;
+var heading =[];
 HomeState(val){
-  _dbref = val;
-  print('96$val');
+  _dbref = FirebaseDatabase.instance.reference().child(val.toString());
+  print("added");
+  heading.add(val.toString());
   }
   void initstate()
   {
@@ -99,11 +63,12 @@ HomeState(val){
   }
 
   //global
-
+  static var Islogin = false;
+  var sem='null',subject='null';
   Map layer_values = {1:"sem",2:"subject",3:"file_name"};
-
   var layer = 1; //l1=>new_files
   var val="null";
+  // Future<SharedPreferences> login = SharedPreferences.getInstance();
  Future <void> data(String param)async{
   //var info = NetworkInfo().getWifiBSSID().then((val){print(val);});
           try{
@@ -120,31 +85,49 @@ HomeState(val){
                 print("error manual $e");
               }
                 Navigator.push(context, MaterialPageRoute(builder: (context)=>PDFPAGE(val,param)));
-
- // print(info.toString());
   }
 
+String funct()
+{
+  var temp='';
+  heading.forEach((element) {
+    temp+=element.toString()+'/';
+  });
+print(temp);
+  return temp;
+}
+
 Widget build(context){
+  Set a = {};
   return Column(children: [
       layer!=1?Container(
         child: Row(children: [
           IconButton(onPressed: (){
             setState(() {
-              print(layer);
               layer-=1;
-             //  data();
+              heading.removeLast();
+              print(layer);
+              if(layer==1)
+              {
+                subject='null';
+                sem='null';
+              }
+              else if(layer==2)
+              {
+                subject='null';
+              }
             });
           }, icon: Icon(Icons.arrow_back)),
-         
-         Center(child:Text(layer_values[layer].toString(),style: TextStyle(fontSize: 30),),),
+        Center(child:Text(funct(),style: TextStyle(fontSize: 24),)),
+        Text(layer_values[layer].toString(),style: TextStyle(fontSize: 24),),
         ],),height: 50,width: double.infinity,decoration: BoxDecoration(border: Border.all(color:Colors.black))
       , margin: EdgeInsets.all(0),
       )
         
       :Container(
         child: Row(children: [
-          Center(child:
-          Text(layer_values[layer].toString(),style: TextStyle(fontSize: 30),),),
+        Center(child:Text(funct(),style: TextStyle(fontSize: 24),)),
+          Text(layer_values[layer].toString(),style: TextStyle(fontSize: 24),),
         ],),height: 50,width: double.infinity,decoration: BoxDecoration(border: Border.all(color:Colors.black))
       , margin: EdgeInsets.all(0),
       ),
@@ -152,25 +135,46 @@ Widget build(context){
       Expanded(child: 
         Container(child: 
         FirebaseAnimatedList(scrollDirection: Axis.vertical,query: _dbref,itemBuilder: (BuildContext context,DataSnapshot snapshot,Animation<double>animation,int index){
-          var keys = snapshot.value.keys;
-          var values = snapshot.value;
-          return GestureDetector(child: Container(
+        var values = snapshot.value;
+       var t = a.add(values[layer_values[layer].toString()].toString());
+        var returnVal;
+          if(sem=='null'&&subject=='null')
+          {
+             returnVal = values[layer_values[layer]].toString();
+          }
+          else if(sem.toString()==values['sem'].toString()&&layer==2)
+          {
+            returnVal = values[layer_values[layer]].toString();
+          }
+          else if(sem.toString()==values['sem'].toString()&&subject.toString()==values['subject'].toString()&&layer==3)
+          {
+               returnVal = values[layer_values[layer]].toString();
+          }
+          return returnVal!=null&&t?GestureDetector(child: Container(
            width:double.infinity,
            height: 200,
-           child: Center(child: Text('${values[layer_values[layer]].toString()}',overflow:TextOverflow.clip)),
+           child: Center(child: Text( values[layer_values[layer]].toString(),overflow:TextOverflow.clip)),
            decoration: BoxDecoration(border: Border.all()),
           ),onDoubleTap: () async{
+            heading.add(values[layer_values[layer]].toString());
               if(layer==layer_values.length)
               {
-                print(values['file_name'].toString());
                 await data(values['file_name'].toString());
               }
-              setState(() {
-              print(layer);
+              setState(() {              
+              if(layer==1)//sem selected
+              {
+                sem = values[layer_values[layer]].toString();
+              }
+              else if(layer==2){//subject
+                 subject = values[layer_values[layer]].toString();
+              }
+
               layer!=layer_values.length?layer+=1:layer=layer_values.length;
+            
             });
-          },
-          );
+         }
+         ):SizedBox(height: 0,);
         }),
       ),
       ),
