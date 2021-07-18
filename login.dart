@@ -5,24 +5,29 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'main.dart';
 import 'upload.dart';
-
+import 'request.dart';
 // ignore: non_constant_identifier_names
 Widget DrawerWidget(BuildContext context)
 {
-  Map returnArea = {'QP':MyApp('QP'),'books':MyApp('books'),'Upload':Upload(),'rate_us':MyApp('QP')};
-  var list = ['QP','books','rate us','Upload'];
-  var icon = [Icons.question_answer,Icons.book,Icons.rate_review,Icons.upload];
+  Map returnArea = {'QP':MyApp('QP'),'books':MyApp('books'),'Upload':Upload(),'Request':Request()};
+  var list = ['QP','books','Request','Upload'];
+  var icon = [Icons.question_answer,Icons.book,Icons.request_page_rounded,Icons.upload];
   return Container(
         child:Drawer(
           child: Container(
-            child: Column(children: [
-              Container(
+            child:Column(children: [
+             Container(
                 padding: EdgeInsets.symmetric(vertical:20).add(EdgeInsets.fromLTRB(15, 18, 2, 1)),
-                child:Text("RIT-LIBRARY",style: TextStyle(fontSize: 50),),
+                child: Column(children: [
+                  Text("ISE LIBRARY",overflow: TextOverflow.clip,maxLines: 1,style: TextStyle(fontSize: 35),),
+                 Text('welcome '+HomeState.USN.toString()),
+                ],),
                 width: double.infinity,
-                height: 140,
+              //  height: 10,
                 color: Colors.blue[400],
               ),
               Expanded(child: ListView.builder(
@@ -38,20 +43,37 @@ Widget DrawerWidget(BuildContext context)
                     margin: EdgeInsets.all(2),
                     decoration: BoxDecoration(border: Border.all(width: 1)),
                     ),
-                    onTap: (){
-                      print("pressed ${list[index]}");
+                    onTap: ()async{
+                    //  print("pressed ${list[index]}");
+
+                      if(list[index]=='Upload')
+                      {
+                            Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+                            var i =await _prefs;
+                            var islogin = i.getBool('login');
+                            islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
+                      }
                       // sideval=list[index];
                       // sideval=='new_files'||sideval=='books'?
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>returnArea[list[index].toString()]));
+                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>returnArea[list[index].toString()]));
                       // Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
                     },
                   );
                 },
-              ),)
+              ),
+              ),
+              HomeState.update?TextButton(onPressed: ()async{
+                await canLaunch(HomeState.url)?launch(HomeState.url):throw 'error something is wrong';
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('something is wrong')));
+              }, child: Row(children: [
+                Icon(Icons.update),
+                Text("Update Available ${HomeState.updateval}")]
+                )
+                ):Text(""),
             ],),
           ),
         ),
-        );
+      );
 }
 
 
@@ -71,6 +93,7 @@ class LoginBody extends StatefulWidget{
 }
 
 class LoginBodyState extends State<LoginBody>{
+
   bool Isloading = false;
   TextEditingController c1 = new TextEditingController();
   TextEditingController c2 = new TextEditingController();
@@ -82,11 +105,11 @@ class LoginBodyState extends State<LoginBody>{
       child: Column(children: [
         Container(
           child: TextField(
-            decoration: InputDecoration(labelText: 'USN'),
+            decoration: InputDecoration(labelText: 'USN',hintText: '1MS.......'),
             autofocus: true,
             style: TextStyle(fontSize: 20),
             controller: c1,
-            maxLength: 100,
+            maxLength: 10,
             ),
           padding: EdgeInsets.all(5),
           margin: EdgeInsets.all(2),
@@ -112,26 +135,33 @@ class LoginBodyState extends State<LoginBody>{
         SizedBox(height: 20,),
         Container(child:Center(child: 
         ElevatedButton(child: Text('Login'),onPressed: ()async{
-setState(() {
-  Isloading=true;
-});
+            setState(() {
+              Isloading=true;
+            });
             await FirebaseDatabase.instance.reference().child('Users').once().then((snapshot)async {
             var i = snapshot.value;
             var j = snapshot.value.keys;
             for (var item in j) {
               Map profile = i[item];
               
-              if(c1.text == profile['Usn'].toString() && c2.text ==  profile['password'].toString())
+              if(c1.text.toLowerCase().toString() == profile['Usn'].toString() && c2.text ==  profile['password'].toString())
               {
                 var s=await FirebaseAuth.instance.signInAnonymously();
-                print("done");
+               // print("done");
                setState(() {
                  HomeState.Islogin=true;
+                 HomeState.USN = profile['Usn'];
                }); 
+                Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+                            var i =await _prefs;
+                            var islogin = i.setBool('login',true);
+                            var USN = i.setString('USN', profile['Usn'].toString());
+                       
                setState(() {
                  Isloading= false;
                });
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Upload()));
+               
+                HomeState.Islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
                 break;
               }
             }
@@ -140,10 +170,6 @@ setState(() {
             });
             HomeState.Islogin?Text(""):ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("wrong credentials")));
           });
-          var username = c1.text;
-          var pass = c2.text;
-
-         
         },)
         ,)),
       ],),
