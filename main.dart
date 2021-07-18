@@ -18,10 +18,11 @@ Future <void> main() async{
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
                             var i =await _prefs;
                             var islogin = i.getBool('login');
-                            var name = i.getString('USN');
-                        
-                            HomeState.USN = name!=''?name.toString():'';
-                           // print('main'+name.toString());
+                            var usn = i.getString('USN');
+                            var name = i.getString('Name');
+                            HomeState.Name = name!=null?name:'user';
+                            HomeState.USN = usn!=''?usn.toString():'';
+                           print('main'+name.toString());
                             HomeState.Islogin = islogin==true?true:false;
                       //      print("main = "+HomeState.Islogin.toString());
                          //   islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
@@ -62,9 +63,12 @@ this.sideval=val;
   Widget build(context){
     return MaterialApp(
       title: "ISE Library",
+      theme: ThemeData(primaryColor: Colors.orange[400],),
       home: Scaffold(
+        
         drawer:DrawerWidget(context),
         appBar: AppBar(
+
         actions: [],
         title: Text('e-LIBRARY ISE'),
         ),
@@ -106,6 +110,7 @@ HomeState(val){
   //global
   static var Islogin = false;
   static var USN = '';
+  static var Name='';
   var sem='null',subject='null';
   Map layer_values = {1:"sem",2:"subject",3:"file_name"};
   var layer = 1; //l1=>new_files

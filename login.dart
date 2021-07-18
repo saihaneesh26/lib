@@ -2,6 +2,8 @@
 // import 'package:firebase_database/firebase_database.dart';
 // import 'package:firebase_database/ui/firebase_animated_list.dart';
 // import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -20,15 +22,26 @@ Widget DrawerWidget(BuildContext context)
         child:Drawer(
           child: Container(
             child:Column(children: [
+              
              Container(
                 padding: EdgeInsets.symmetric(vertical:20).add(EdgeInsets.fromLTRB(15, 18, 2, 1)),
                 child: Column(children: [
-                  Text("ISE LIBRARY",overflow: TextOverflow.clip,maxLines: 1,style: TextStyle(fontSize: 35),),
-                 Text('welcome '+HomeState.USN.toString()),
+                  Row(children: [
+                     Container(
+                      padding: EdgeInsets.all(1),
+                      margin: EdgeInsets.all(1),
+                      width: 50,
+                      height: 50,
+                      child: Image.asset('assets/icon.png'),
+                      ),SizedBox(width: 5,),
+                    Text("ISE LIBRARY",overflow: TextOverflow.clip,maxLines: 1,style: TextStyle(fontSize: 35),),
+                    
+                  ]),
+                 Text('welcome '+HomeState.USN.toString()+' '+HomeState.Name,overflow: TextOverflow.clip,maxLines: 2,style: TextStyle(fontSize: 15),),
                 ],),
                 width: double.infinity,
               //  height: 10,
-                color: Colors.blue[400],
+                color: Colors.orange[400],
               ),
               Expanded(child: ListView.builder(
                 itemCount: list.length,
@@ -82,7 +95,8 @@ class Login extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-appBar: AppBar(actions: [],title: Text('Login'),),
+      
+  appBar: AppBar(actions: [] ,title: Text('Login'),),
 drawer: DrawerWidget(context),
 body: LoginBody(),
     );
@@ -145,18 +159,20 @@ class LoginBodyState extends State<LoginBody>{
             for (var item in j) {
               Map profile = i[item];
               
-              if(c1.text.toLowerCase().toString() == profile['Usn'].toString() && c2.text ==  profile['password'].toString())
+              if(c1.text.toUpperCase().toString() == profile['Usn'].toString() && c2.text ==  profile['password'].toString())
               {
                 var s=await FirebaseAuth.instance.signInAnonymously();
                // print("done");
                setState(() {
                  HomeState.Islogin=true;
                  HomeState.USN = profile['Usn'];
+                 HomeState.Name = profile['name'];
                }); 
                 Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
                             var i =await _prefs;
                             var islogin = i.setBool('login',true);
                             var USN = i.setString('USN', profile['Usn'].toString());
+                            i.setString('Name', profile['name']);
                        
                setState(() {
                  Isloading= false;

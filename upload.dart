@@ -24,6 +24,9 @@ appBar: AppBar(actions: [IconButton(icon:Icon(Icons.logout),onPressed: ()async{
                             var i =await _prefs;
                             var islogin = i.setBool('login',false);
                             var USN = i.setString('USN', '');
+                            var name = i.setString('Name', 'user');
+                            HomeState.Name='user';
+                            HomeState.USN='';
                            // print("set"+islogin.toString());
                            // islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
   await FirebaseAuth.instance.signOut();
