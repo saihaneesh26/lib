@@ -99,7 +99,9 @@ class RequestBodyState extends State<RequestBody>{
 
     ),
     Text('Requsted',style: TextStyle(fontSize: 40),),
-      Expanded(child:Container(child:FirebaseAnimatedList(query: _dbref,itemBuilder: (BuildContext context,DataSnapshot snapshot,Animation animation,int index){
+      Expanded(child:Container(
+        width: double.infinity,
+        child:FirebaseAnimatedList(query: _dbref,itemBuilder: (BuildContext context,DataSnapshot snapshot,Animation animation,int index){
           var values = snapshot.value;
           var keys = snapshot.value.keys;
           var p = (index+1).toString()+". "+values['type']+'-'+values['sem']+' '+values['subject'];
@@ -109,15 +111,18 @@ class RequestBodyState extends State<RequestBody>{
           }
           print(p);
           return Container(
+            width: double.infinity,
             decoration: BoxDecoration(border: Border.all(color: Colors.black)),
             child:(
               Row(children:[
-              values['status']=='NO'?Icon(Icons.pending,color:Colors.red):Icon(Icons.verified,color:Colors.green),  
-              Container(
+              values['status']=='NO'?Icon(Icons.pending,color:Colors.red,size: 25,):Icon(Icons.verified,color:Colors.green,size: 25,),  
+              Expanded(
+              child: Container(
               padding: EdgeInsets.all(1),
               margin: EdgeInsets.all(3),
-              child: Expanded(child: Text(p,style: TextStyle(fontSize: 30),overflow: TextOverflow.clip,),),
-              decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+               decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+                child:Text(p,style: TextStyle(fontSize: 20),overflow: TextOverflow.clip,)),
+            
             ),
             ]
             )
