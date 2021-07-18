@@ -12,8 +12,9 @@ import 'login.dart';
 Future <void> main() async{ 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  PackageInfo packageInfo = await PackageInfo.fromPlatform(); 
-  var present_val = packageInfo.toString();
+  PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  var present_val = packageInfo.version.toString();
+  print(present_val);
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
                             var i =await _prefs;
                             var islogin = i.getBool('login');
@@ -37,10 +38,11 @@ Future <void> main() async{
       up = i.setString('update', 'DO');
       HomeState.update = true;
       HomeState.updateval = value.value.toString();
+      HomeState.main_update = true;
       print("update");
     }    
   });
-     await FirebaseDatabase.instance.reference().child('Url').once().then((value) {
+     await FirebaseDatabase.instance.reference().child('url').once().then((value) {
         HomeState.url = value.value.toString();
      });
   // SharedPreferences.setMockInitialValues({
@@ -90,6 +92,7 @@ var _dbref;
 static bool update=false;
 var heading =[];
 static var url;
+static bool main_update=false;
 HomeState(val){
   _dbref = FirebaseDatabase.instance.reference().child(val.toString());
 
@@ -143,7 +146,7 @@ Widget build(context){
     actions: [
       TextButton(onPressed: (){
         setState(() {
-          update=false;
+          HomeState.update=false;
         });
       }, child: Text('close')),
       TextButton(onPressed: ()async{

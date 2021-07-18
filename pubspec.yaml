@@ -1,0 +1,36 @@
+name: ritlibrary
+description: A new Flutter project.
+
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  firebase_core: ^1.4.0
+  firebase_database: ^7.1.2
+  # cloud_firestore:
+  url_launcher:
+  # path_provider: ^2.0.1
+  firebase_storage: ^8.0.5
+  file_picker:
+  package_info:
+  firebase_auth: ^3.0.1
+  shared_preferences: ^2.0.6
+  syncfusion_flutter_pdfviewer: ^19.2.47-beta
+
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+
+  uses-material-design: true

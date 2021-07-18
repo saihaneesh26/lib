@@ -62,7 +62,8 @@ Widget DrawerWidget(BuildContext context)
                 },
               ),
               ),
-              HomeState.update?TextButton(onPressed: ()async{
+              HomeState.main_update?TextButton(onPressed: ()async{
+                print(HomeState.url.toString());
                 await canLaunch(HomeState.url)?launch(HomeState.url):throw 'error something is wrong';
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('something is wrong')));
               }, child: Row(children: [
