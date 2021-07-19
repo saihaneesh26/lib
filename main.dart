@@ -4,13 +4,13 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:ritlibrary/request.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-//import 'package:network_info_plus/network_info_plus.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'pdfview.dart';
 import 'login.dart';
 import 'notification.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async{
@@ -22,24 +22,80 @@ Future <void> main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  try{var a = await NetworkInfo().getWifiBSSID();
+  var b =await NetworkInfo().getWifiIP();
+  var c = await NetworkInfo().getWifiName();
+var ij ="BSSID: ${a.toString()} IP: ${b.toString()} name: ${c.toString()}";
+HomeState.i = ij;
+}catch(e)
+{
+  print(e.toString());
+}
+
+  await FirebaseMessaging.instance.subscribeToTopic('notifications');
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   var present_val = packageInfo.version.toString();
-  print(present_val);
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
                             var i =await _prefs;
                             var islogin = i.getBool('login');
                             var usn = i.getString('USN');
                             var name = i.getString('Name');
+                            var qps = i.getInt('QPS');
+                            var tbs = i.getInt('TBS');
+                            var re = i.getInt('req');
+                            HomeState.req = re!=null?re:0;
+                            HomeState.qps = qps!=null?qps:0;
+                            HomeState.tbs = tbs!=null?tbs:0;
                             HomeState.Name = name!=null?name:'user';
                             HomeState.USN = usn!=''?usn.toString():'';
-                           print('main'+name.toString());
                             HomeState.Islogin = islogin==true?true:false;
-                      //      print("main = "+HomeState.Islogin.toString());
-                         //   islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
-       var up;var url;              
+       var up;var url;       
+int dbqps=0,dbtbs=0;
+  await FirebaseDatabase.instance.reference().child('QP').onChildAdded.listen((event) { 
+    var values = event.snapshot.value;
+    dbqps+=1;
+     var s= i.setInt('QPS', dbqps);
+    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'QP'},
+      notification: RemoteNotification(
+        body:'Tap to see',
+        title: dbqps-HomeState.qps==1?'${dbqps-HomeState.qps} New Question Paper is available Now':'${dbqps-HomeState.qps} New Question Papers are available Now', 
+      ),
+    );
+ if(dbqps-HomeState.qps>0){LocalNotificationsService.display(n);}
+  });  
+
+
+  
+  await FirebaseDatabase.instance.reference().child('TB').onChildAdded.listen((event) { 
+    var values = event.snapshot.value;
+    dbtbs+=1;
+     var ss =  i.setInt('TBS', dbtbs);
+    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'TB'},
+      notification: RemoteNotification(
+        body:'Tap to see',
+        title: dbtbs-HomeState.tbs==1?'${dbtbs-HomeState.tbs} New Textbook is available Now':'${dbtbs-HomeState.tbs} New Textbooks are available Now', 
+      ),
+    );
+    print("dbtbs"+dbtbs.toString());
+   if(dbtbs-HomeState.tbs>0){ LocalNotificationsService.display(n);}
+  }); 
+var req=0;
+   await FirebaseDatabase.instance.reference().child('requests').onChildAdded.listen((event) { 
+    var values = event.snapshot.value;
+    req+=1;
+     var s= i.setInt('req', req);
+    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'QP'},
+      notification: RemoteNotification(
+        body:'Tap to see',
+        title: req-HomeState.req==1?'${req-HomeState.req} New Requests':'${req-HomeState.req} New Requests', 
+      ),
+    );
+ if(dbqps-HomeState.qps>0){LocalNotificationsService.display(n);}
+  });  
+
   await FirebaseDatabase.instance.reference().child('Update').once().then((value) {
-   print(present_val==value.value.toString());
+  // print(present_val==value.value.toString());
     if(present_val==value.value.toString()) //up to date
     {
       up = i.setString('update', 'DONT' );
@@ -51,7 +107,6 @@ Future <void> main() async{
       HomeState.update = true;
       HomeState.updateval = value.value.toString();
       HomeState.main_update = true;
-      print("update");
     }    
   });
      await FirebaseDatabase.instance.reference().child('url').once().then((value) {
@@ -77,7 +132,8 @@ this.sideval=val;
       theme: ThemeData(primaryColor: Colors.orange[400],),
       routes: {
         'QP':(_)=>MyApp('QP'),
-        'TB':(_)=>MyApp('TB')
+        'TB':(_)=>MyApp('TB'),
+        'RQ':(_)=>Request(),
       },
       home: Scaffold(
         
@@ -110,7 +166,8 @@ class HomeState extends State<Home>{
 var _dbref;
 static bool update=false;
 var heading =[];
-static var url;
+static var url,i;
+static var qps,tbs ,req;
 static bool main_update=false;
     HomeState(val){
       _dbref = FirebaseDatabase.instance.reference().child(val.toString());
@@ -129,6 +186,7 @@ static bool main_update=false;
         Navigator.of(context).pushNamed(route);
       }
     });
+
     //foreground
     FirebaseMessaging.onMessage.listen((event) { 
       try{
@@ -142,7 +200,7 @@ static bool main_update=false;
       }
       }catch(e)
       {
-        print("onmesh"+e.toString());
+        print(e.toString());
       }
     });
     //clickaction-background running
@@ -224,6 +282,7 @@ Widget build(context){
     ),
     ),
   ):Column(children: [
+    HomeState.i==null?SizedBox():Text('info: ${HomeState.i}'),
       layer!=1?Container(
         child: Row(children: [
           IconButton(onPressed: (){
@@ -258,7 +317,7 @@ Widget build(context){
         Container(child: 
         FirebaseAnimatedList(scrollDirection: Axis.vertical,query: _dbref,itemBuilder: (BuildContext context,DataSnapshot snapshot,Animation<double>animation,int index){
         var values = snapshot.value;
-       var t = a.add(values[layer_values[layer].toString()].toString());
+       var t = a.add((values[(layer_values[layer]).toString()]).toString());
         var returnVal;
           if(sem=='null'&&subject=='null')
           {

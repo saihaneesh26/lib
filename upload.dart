@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:firebase_core/firebase_core.dart';
@@ -151,8 +153,10 @@ class UploadBodyState extends State<UploadBody>{
             Isloading=true;
           });
           try{
-            result = await FilePicker.platform.pickFiles(allowMultiple: false,type: FileType.custom,allowedExtensions: ['pdf']);}catch(e){
-            print(e);
+          result = await FilePicker.platform.pickFiles(allowMultiple: false,type: FileType.custom,allowedExtensions: ['pdf']);
+       }
+       catch(e){
+       //     print(e);
           }
           if(result==null)
           {
@@ -240,6 +244,7 @@ class UploadBodyState extends State<UploadBody>{
                     Isloading=false;
                   });
                   //
+
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Uploaded")));
                }
                else{
