@@ -22,10 +22,11 @@ Future <void> main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  try{var a = await NetworkInfo().getWifiBSSID();
+  try{
   var b =await NetworkInfo().getWifiIP();
   var c = await NetworkInfo().getWifiName();
-var ij ="BSSID: ${a.toString()} IP: ${b.toString()} name: ${c.toString()}";
+  c= c==null?'':"name: "+c.toString();
+var ij ="IP: ${b.toString()} ${c.toString()}";
 HomeState.i = ij;
 }catch(e)
 {
@@ -50,22 +51,20 @@ HomeState.i = ij;
                             HomeState.Name = name!=null?name:'user';
                             HomeState.USN = usn!=''?usn.toString():'';
                             HomeState.Islogin = islogin==true?true:false;
-       var up;var url;       
-int dbqps=0,dbtbs=0;
-  await FirebaseDatabase.instance.reference().child('QP').onChildAdded.listen((event) { 
-    var values = event.snapshot.value;
-    dbqps+=1;
-     var s= i.setInt('QPS', dbqps);
-    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'QP'},
-      notification: RemoteNotification(
-        body:'Tap to see',
-        title: dbqps-HomeState.qps==1?'${dbqps-HomeState.qps} New Question Paper is available Now':'${dbqps-HomeState.qps} New Question Papers are available Now', 
-      ),
-    );
- if(dbqps-HomeState.qps>0){LocalNotificationsService.display(n);}
-  });  
-
-
+                        var up;var url;       
+                  int dbqps=0,dbtbs=0;
+                    await FirebaseDatabase.instance.reference().child('QP').onChildAdded.listen((event) { 
+                      var values = event.snapshot.value;
+                      dbqps+=1;
+                      var s= i.setInt('QPS', dbqps);
+                      RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'QP'},
+                        notification: RemoteNotification(
+                          body:'Tap to see',
+                          title: dbqps-HomeState.qps==1?'${dbqps-HomeState.qps} New Question Paper is available Now':'${dbqps-HomeState.qps} New Question Papers are available Now', 
+                        ),
+                      );
+                  if(dbqps-HomeState.qps>0){LocalNotificationsService.display(n);}
+                    });  
   
   await FirebaseDatabase.instance.reference().child('TB').onChildAdded.listen((event) { 
     var values = event.snapshot.value;
@@ -91,7 +90,7 @@ var req=0;
         title: req-HomeState.req==1?'${req-HomeState.req} New Requests':'${req-HomeState.req} New Requests', 
       ),
     );
- if(dbqps-HomeState.qps>0){LocalNotificationsService.display(n);}
+ if(dbqps-HomeState.qps>0&&HomeState.Name!='user'){LocalNotificationsService.display(n);}
   });  
 
   await FirebaseDatabase.instance.reference().child('Update').once().then((value) {

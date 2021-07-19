@@ -1,16 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
-// import 'package:path_provider/path_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart';
-// import 'package:path/path.dart';
 import 'login.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -18,7 +13,6 @@ class Upload extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-   // print('upload='+HomeState.Islogin.toString());
     return HomeState.Islogin==false?Login():Scaffold(
 appBar: AppBar(actions: [IconButton(icon:Icon(Icons.logout),onPressed: ()async{
   HomeState.Islogin=false;
@@ -29,8 +23,6 @@ appBar: AppBar(actions: [IconButton(icon:Icon(Icons.logout),onPressed: ()async{
                             var name = i.setString('Name', 'user');
                             HomeState.Name='user';
                             HomeState.USN='';
-                           // print("set"+islogin.toString());
-                           // islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
   await FirebaseAuth.instance.signOut();
   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyApp('QP')));
 },)],title: Text('Upload'),),
@@ -68,7 +60,6 @@ class UploadBodyState extends State<UploadBody>{
             ),
           padding: EdgeInsets.all(5),
           margin: EdgeInsets.all(2),
-        //   decoration: BoxDecoration(border: Border.all(width: 2,color: Colors.blue)),
         ),
         SizedBox(height: 10,),
         Container(
@@ -80,7 +71,6 @@ class UploadBodyState extends State<UploadBody>{
             ),
           padding: EdgeInsets.all(5),
           margin: EdgeInsets.all(2),
-   // decoration: BoxDecoration(border: Border.all(width:2,color: Colors.blue)),
         ),
         SizedBox(height: 10,),
         Container(
@@ -92,25 +82,8 @@ class UploadBodyState extends State<UploadBody>{
             ),
           padding: EdgeInsets.all(5),
           margin: EdgeInsets.all(2),
-   // decoration: BoxDecoration(border: Border.all(width:2,color: Colors.blue)),
         ),
         SizedBox(height: 10,),
-  //       Container(
-  //         child: TextField(
-  //            decoration: InputDecoration(labelText: 'Type',hintText: 'QP / TB'),
-  //           style: TextStyle(fontSize: 20),
-  //           controller: c5,
-  //           maxLength: 2,onChanged: (val)
-  //           {
-  //             setState(() {
-  //               type=c5.text;
-  //             });
-  //           },
-  //           ),
-  //         padding: EdgeInsets.all(5),
-  //         margin: EdgeInsets.all(2),
-  //  // decoration: BoxDecoration(border: Border.all(width:2,color: Colors.blue)),
-  //       ),
         Row(
           children: [
             Text('Type: ',style: TextStyle(fontSize: 20),),
