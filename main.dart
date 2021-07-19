@@ -9,9 +9,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 //import 'package:network_info_plus/network_info_plus.dart';
 import 'pdfview.dart';
 import 'login.dart';
+import 'notification.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async{
+  await Firebase.initializeApp();
+  print("a msg show up ${message.notification!.body}");
+}
+
 Future <void> main() async{ 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   var present_val = packageInfo.version.toString();
   print(present_val);
@@ -64,6 +75,10 @@ this.sideval=val;
     return MaterialApp(
       title: "ISE Library",
       theme: ThemeData(primaryColor: Colors.orange[400],),
+      routes: {
+        'QP':(_)=>MyApp('QP'),
+        'TB':(_)=>MyApp('TB')
+      },
       home: Scaffold(
         
         drawer:DrawerWidget(context),
@@ -97,15 +112,55 @@ static bool update=false;
 var heading =[];
 static var url;
 static bool main_update=false;
-HomeState(val){
-  _dbref = FirebaseDatabase.instance.reference().child(val.toString());
+    HomeState(val){
+      _dbref = FirebaseDatabase.instance.reference().child(val.toString());
 
-  heading.add(val.toString());
-  }
-  void initstate()
+      heading.add(val.toString());
+      }
+  void initState()
   {
     super.initState();
-  }
+      LocalNotificationsService.init(context);
+    //init msg - gives msg and open app from termination
+    FirebaseMessaging.instance.getInitialMessage().then((value) {
+      if(value != null)
+      {
+        final route = value.data['route'];
+        Navigator.of(context).pushNamed(route);
+      }
+    });
+    //foreground
+    FirebaseMessaging.onMessage.listen((event) { 
+      try{
+      if(event.notification!=null)
+      {
+        print(event.notification!.title);
+        print(event.notification!.body);
+        LocalNotificationsService.display(event);
+      }else{
+        print('null');
+      }
+      }catch(e)
+      {
+        print("onmesh"+e.toString());
+      }
+    });
+    //clickaction-background running
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      if(message.notification!=null)
+      {
+        final routeFromMessage = message.data['route'];
+        print(routeFromMessage);
+        Navigator.of(context).pushNamed(routeFromMessage);
+      }else{
+        print("null2");
+      }
+    });
+
+
+
+
+  }//init state
 
   //global
   static var Islogin = false;
