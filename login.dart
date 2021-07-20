@@ -13,8 +13,8 @@ import 'request.dart';
 // ignore: non_constant_identifier_names
 Widget DrawerWidget(BuildContext context)
 {
-  Map returnArea = {'QP':MyApp('QP'),'books':MyApp('books'),'Upload':Upload(),'Request':Request()};
-  var list = ['QP','books','Request','Upload'];
+  Map returnArea = {'QP':MyApp('QP'),'Lab':MyApp('Lab'),'Upload':Upload(),'Request':Request()};
+  var list = ['QP','Lab','Request','Upload'];
   var icon = [Icons.question_answer,Icons.book,Icons.request_page_rounded,Icons.upload];
   return Container(
         child:Drawer(
@@ -159,8 +159,16 @@ class LoginBodyState extends State<LoginBody>{
               
               if(c1.text.toUpperCase().toString() == profile['Usn'].toString() && c2.text ==  profile['password'].toString())
               {
-                var s=await FirebaseAuth.instance.signInAnonymously();
-               // print("done");
+                try{
+                var s=await FirebaseAuth.instance.signInWithEmailAndPassword(email: profile['Usn'].toString().toLowerCase()+"@gmail.com", password: profile['password'].toString());
+               }catch(e){
+                 UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                        email: profile['Usn'].toString().toLowerCase()+"@gmail.com",
+                        password:c2.text
+                    );
+                var s=await FirebaseAuth.instance.signInWithEmailAndPassword(email: profile['Usn'].toString().toLowerCase()+"@gmail.com", password: profile['password'].toString());  
+                 print('new user created');
+               }// print("done");
                setState(() {
                  HomeState.Islogin=true;
                  HomeState.USN = profile['Usn'];
@@ -176,8 +184,7 @@ class LoginBodyState extends State<LoginBody>{
                  Isloading= false;
                });
                
-                HomeState.Islogin==true?Navigator.push(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
-                break;
+                HomeState.Islogin==true?Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Upload())):Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
               }
             }
             setState(() {

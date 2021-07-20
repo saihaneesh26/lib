@@ -1,11 +1,5 @@
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_database/firebase_database.dart';
-// import 'package:firebase_database/ui/firebase_animated_list.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-// import 'package:network_info_plus/network_info_plus.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-
 
 
 // ignore: must_be_immutable
@@ -26,15 +20,40 @@ class PDFVIEWBODYState extends State<PDFPAGE>{
     this.name=param;
     this.link=link;
   }
-
+  var _pdfViewerController;
   void initState() 
   {
     super.initState();
   }
- // final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
+  var notification=null;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(actions: [],title: Text("$name"),),body:Container(child:link!="null"?SfPdfViewer.network(link):Text("no file") ,));
+    return Scaffold(
+      appBar: AppBar(title: Row(children: [
+         IconButton(onPressed: ()async{
+          Navigator.popAndPushNamed(context, 'QP');
+        }, icon: Icon(Icons.arrow_back))
+        ,Text(name.toString())]),actions: [
+       
+      ],),
+      body:Container(
+        child: Column(children: [
+          notification!=null?Text('$notification'):SizedBox(height: 0,),
+          Expanded(
+            child: SfPdfViewer.network(
+            link,
+            onDocumentLoadFailed: (e)=>{
+              setState((){
+                notification = "Error: "+e.toString();
+              })
+            },
+            enableDoubleTapZooming: true,
+            enableTextSelection: false,
+            ),
+        ),
+        ]
+      )
+      )
+    );
   }
-
 }

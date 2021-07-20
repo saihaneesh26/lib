@@ -9,14 +9,15 @@ import 'package:ritlibrary/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart';
 import 'upload.dart';
-
+import 'package:clipboard/clipboard.dart';
 
 class Request extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       drawer: DrawerWidget(context),
-      appBar: AppBar(actions: [],),
+      appBar: AppBar(actions: [],title: Text('Request'),),
       body: RequestBody()
     );
   }
@@ -30,25 +31,26 @@ class RequestBodyState extends State<RequestBody>{
   TextEditingController c1 = new TextEditingController();
   TextEditingController c2 = new TextEditingController();
   TextEditingController c3 = new TextEditingController();
+  TextEditingController c4 = new TextEditingController();
   bool isloading=false;
   var type=null;
   Widget build(context)
   {
     return isloading?Center(child: CircularProgressIndicator(),):Column(children: [
-      Container(
+     SingleChildScrollView(child: Container(
       padding: EdgeInsets.all(2),
       margin: EdgeInsets.all(2),
       decoration: BoxDecoration(border: Border.all(color: Colors.black)),
       child: Column(children: [
-        Text("Request",style: TextStyle(fontSize: 20),),
+   
         TextField(//sem
           controller: c1,
+          maxLength: 1,
           decoration: InputDecoration(labelText: 'semester',hintText:'1'),
-
         ),
         TextField(//subject
           controller: c2,
-           decoration: InputDecoration(labelText: 'Subject',hintText: ' IS**'),
+           decoration: InputDecoration(labelText: 'Subject',hintText: ' IS**/ISL**'),
         ),
         Row(children: [
             Text('Type: ',style: TextStyle(fontSize: 20),),
@@ -57,26 +59,34 @@ class RequestBodyState extends State<RequestBody>{
             type = val;
           });
         }),Text("QP"),SizedBox(width: 20,),
-        Radio(value: 'TB', groupValue: type, onChanged: (val){
+        Radio(value: 'Lab', groupValue: type, onChanged: (val){
           setState(() {
             type = val;
           });
-        }),Text('TB'),
+        }),Text('Lab'),
         ],),
         type=='QP'?TextField(//year
           controller: c3,
            decoration: InputDecoration(labelText: 'Year',hintText: 'YYYY'),
-        ):Text(''),
+        ):SizedBox(height: 0,),
+        type=='QP'?TextField(//year
+          controller: c4,
+           decoration: InputDecoration(labelText: 'Type',hintText: 'SEE/SUP/CIE1/CIE2'),
+        ):SizedBox(),
+        type=='Lab'?TextField(//year
+          controller: c4,
+           decoration: InputDecoration(labelText: 'Qno',hintText: 'all/*'),
+        ):SizedBox(height: 0,),
         ElevatedButton(onPressed: ()async{
-          if(c2.text!=null&&c2.text!=''&&c1.text!=null&&c1.text!=''&&c1.text!=null&&c1.text!=''&&type!=''&&type!=null)
+          if(c2.text!=null&&c2.text!=''&&c1.text!=null&&c1.text!=''&&c1.text!=null&&c1.text!=''&&type!=''&&type!=null&&c4.text!=null)
           {
             setState(() {
               isloading=true;
             });
             await FirebaseDatabase.instance.reference().child('requests').push().set({
-            'sem':'sem-'+c1.text.toString(),
+            'id':c2.text.toString().toLowerCase()+'-'+c4.text.toString().toLowerCase()+'-'+c3.text.toString(),
             'subject':c2.text.toString().toUpperCase(),
-            'type':type.toString(),
+            'type':type.toString()+' '+c4.text,
             'year':c3.text.toString(),
             'status':'NO'
             });
@@ -84,6 +94,7 @@ class RequestBodyState extends State<RequestBody>{
               c1.clear();
               c2.clear();
               c3.clear();
+              c4.clear();
               type=null;
               isloading=false;
               print("done");
@@ -96,21 +107,22 @@ class RequestBodyState extends State<RequestBody>{
         }, child: Text('Request')),
       
       ],),
-
+     )
     ),
-    Text('Requested',style: TextStyle(fontSize: 40),),
-      Expanded(child:Container(
+ Expanded(child:  Container(
+     height: 40,
+     child: Text('Requested',style: TextStyle(fontSize: 40),)),
+      ),Expanded(child:Container(
         width: double.infinity,
         child:FirebaseAnimatedList(query: _dbref,itemBuilder: (BuildContext context,DataSnapshot snapshot,Animation animation,int index){
           var values = snapshot.value;
           var keys = snapshot.value.keys;
-          var p = (index+1).toString()+". "+values['type']+'-'+values['sem']+' '+values['subject'];
+          var p = (index+1).toString()+"."+values['type']+" "+values['subject'];
           if(values['year']!=null)
           {
             p+='-'+values['year'];
           }
-          print(p);
-          return Container(
+          return SingleChildScrollView(child:Container(
             width: double.infinity,
             decoration: BoxDecoration(border: Border.all(color: Colors.black)),
             child:(
@@ -122,12 +134,15 @@ class RequestBodyState extends State<RequestBody>{
               margin: EdgeInsets.all(3),
                decoration: BoxDecoration(border: Border.all(color: Colors.black)),
                 child:Text(p,style: TextStyle(fontSize: 20),overflow: TextOverflow.clip,)),
-            
-            ),
+             ),
+             IconButton(onPressed: ()async{
+               FlutterClipboard.copy(values['id']);
+               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Id copied to clipboard")));
+             }, icon: Icon(Icons.copy))
             ]
             )
             ),
-          );
+          ));
         },) 
         ,) //listview
         ,)

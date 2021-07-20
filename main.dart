@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:ritlibrary/request.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:network_info_plus/network_info_plus.dart';
 import 'pdfview.dart';
 import 'login.dart';
 import 'notification.dart';
@@ -22,16 +21,6 @@ Future <void> main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  try{
-  var b =await NetworkInfo().getWifiIP();
-  var c = await NetworkInfo().getWifiName();
-  c= c==null?'':"name: "+c.toString();
-var ij ="IP: ${b.toString()} ${c.toString()}";
-HomeState.i = ij;
-}catch(e)
-{
-  print(e.toString());
-}
 
   await FirebaseMessaging.instance.subscribeToTopic('notifications');
 
@@ -43,48 +32,50 @@ HomeState.i = ij;
                             var usn = i.getString('USN');
                             var name = i.getString('Name');
                             var qps = i.getInt('QPS');
-                            var tbs = i.getInt('TBS');
+                            var lp = i.getInt('lp');
+                            var agreement = i.getBool('agreement');
                             var re = i.getInt('req');
                             HomeState.req = re!=null?re:0;
+                            HomeState.ag = agreement!=null?agreement:false;
                             HomeState.qps = qps!=null?qps:0;
-                            HomeState.tbs = tbs!=null?tbs:0;
                             HomeState.Name = name!=null?name:'user';
                             HomeState.USN = usn!=''?usn.toString():'';
+                            HomeState.lp = lp!=null?lp:0;
                             HomeState.Islogin = islogin==true?true:false;
                         var up;var url;       
-                  int dbqps=0,dbtbs=0;
+                  int dbqps=0,dblp=0;
                     await FirebaseDatabase.instance.reference().child('QP').onChildAdded.listen((event) { 
                       var values = event.snapshot.value;
                       dbqps+=1;
                       var s= i.setInt('QPS', dbqps);
                       RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'QP'},
                         notification: RemoteNotification(
-                          body:'Tap to see',
+                          body:'Tap to Check',
                           title: dbqps-HomeState.qps==1?'${dbqps-HomeState.qps} New Question Paper is available Now':'${dbqps-HomeState.qps} New Question Papers are available Now', 
                         ),
                       );
                   if(dbqps-HomeState.qps>0){LocalNotificationsService.display(n);}
                     });  
+
+                     await FirebaseDatabase.instance.reference().child('Lab').onChildAdded.listen((event) { 
+                      var values = event.snapshot.value;
+                      dblp+=1;
+                      var s= i.setInt('lp', dblp);
+                      RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'Lab'},
+                        notification: RemoteNotification(
+                          body:'Tap to Check',
+                          title: dblp-HomeState.lp==1?'${dblp-HomeState.lp} New Lab Program is available Now':'${dblp-HomeState.lp} New Lab Programs are available Now', 
+                        ),
+                      );
+                  if(dblp-HomeState.lp>0){LocalNotificationsService.display(n);}
+                    });  
   
-  await FirebaseDatabase.instance.reference().child('books').onChildAdded.listen((event) { 
-    var values = event.snapshot.value;
-    dbtbs+=1;
-     var ss =  i.setInt('TBS', dbtbs);
-    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'TB'},
-      notification: RemoteNotification(
-        body:'Tap to see',
-        title: dbtbs-HomeState.tbs==1?'${dbtbs-HomeState.tbs} New Textbook is available Now':'${dbtbs-HomeState.tbs} New Textbooks are available Now', 
-      ),
-    );
-    print("dbtbs"+dbtbs.toString());
-   if(dbtbs-HomeState.tbs>0){ LocalNotificationsService.display(n);}
-  }); 
 var req=0;
    await FirebaseDatabase.instance.reference().child('requests').onChildAdded.listen((event) { 
     var values = event.snapshot.value;
     req+=1;
      var s= i.setInt('req', req);
-    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'QP'},
+    RemoteMessage n = new RemoteMessage(messageId: '1',data: {'route':'RQ'},
       notification: RemoteNotification(
         body:'Tap to see',
         title: req-HomeState.req==1?'${req-HomeState.req} New Requests':'${req-HomeState.req} New Requests', 
@@ -106,6 +97,8 @@ var req=0;
       HomeState.update = true;
       HomeState.updateval = value.value.toString();
       HomeState.main_update = true;
+      i.setBool('agreement',false);
+      HomeState.ag = false;
     }    
   });
      await FirebaseDatabase.instance.reference().child('url').once().then((value) {
@@ -131,7 +124,7 @@ this.sideval=val;
       theme: ThemeData(primaryColor: Colors.orange[400],),
       routes: {
         'QP':(_)=>MyApp('QP'),
-        'TB':(_)=>MyApp('TB'),
+        'Lab':(_)=>MyApp('Lab'),
         'RQ':(_)=>Request(),
       },
       home: Scaffold(
@@ -166,7 +159,8 @@ var _dbref;
 static bool update=false;
 var heading =[];
 static var url,i;
-static var qps,tbs ,req;
+static var qps,lp ,req;
+static bool ag = false;
 static bool main_update=false;
     HomeState(val){
       _dbref = FirebaseDatabase.instance.reference().child(val.toString());
@@ -229,8 +223,8 @@ static bool main_update=false;
   var val="null";
   static var updateval = '';
   Future<SharedPreferences> login = SharedPreferences.getInstance();
+  
  Future <void> data(String param)async{
-  //var info = NetworkInfo().getWifiBSSID().then((val){print(val);});
           try{
                 var file = FirebaseStorage.instance.ref().child('$param');
                 
@@ -244,7 +238,7 @@ static bool main_update=false;
               {
                 print("error manual $e");
               }
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>PDFPAGE(val,param)));
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>PDFPAGE(val,param)));
   }
 
 String funct()
@@ -258,7 +252,27 @@ String funct()
 
 Widget build(context){
   Set a = {};
-  return update==true?AlertDialog(
+  bool v=false;var type;
+  return HomeState.ag==false?AlertDialog(
+    title: Text('Agreement & Privacy Policy'),
+    content: Container(
+      height: 300,
+      child:SingleChildScrollView(child: Text('Disclaimer:\nThe Content inside is only Education purpose only.\n The shared content is available in Public and RIT Library.\nThe information Provided inside may not be reliable and may be inaccurate.\nThe information is taken from respective writers and they are notified that this information is made public.\nThe information inside can be shared with others without any information to respective authors or Owners. So Use if wisely☺\n')),
+      ),
+    actions: [
+      TextButton(onPressed: (){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("You cannot Continue to use this App unless you Accept")));
+      }, child: Text("Reject")),
+    TextButton(onPressed: ()async{
+        Future<SharedPreferences> _p = SharedPreferences.getInstance();
+         var i =await _p;
+        var islogin = i.setBool('agreement',true);
+         setState(() {  
+         HomeState.ag=true;
+         });
+      }, child: Text("Accept All and Continue"))
+     ],
+  ):update==true?AlertDialog(
     title: Text("Update available"),
     actions: [
       TextButton(onPressed: (){
@@ -281,7 +295,6 @@ Widget build(context){
     ),
     ),
   ):Column(children: [
-    HomeState.i==null?SizedBox():Text('info: ${HomeState.i}'),
       layer!=1?Container(
         child: Row(children: [
           IconButton(onPressed: (){
@@ -296,8 +309,8 @@ Widget build(context){
               else if(layer==2)
               {
                 subject='null';
-                heading.removeLast();
               }
+              
             });
           }, icon: Icon(Icons.arrow_back)),
         Expanded(child:Text(funct(),style: TextStyle(fontSize: 20),overflow:TextOverflow.clip,)),
@@ -307,7 +320,7 @@ Widget build(context){
         
       :Container(
         child: Row(children: [
-    Expanded(child:Text(funct(),style: TextStyle(fontSize: 20),overflow: TextOverflow.clip,)),
+    Expanded(child:Text("  "+funct(),style: TextStyle(fontSize: 20),overflow: TextOverflow.clip,)),
         ],),height: 50,width: double.infinity,decoration: BoxDecoration(border: Border.all(color:Colors.black))
       , margin: EdgeInsets.all(0),
       ),
@@ -335,7 +348,7 @@ Widget build(context){
            height: 200,
            child: Center(child: Text( values[layer_values[layer]].toString(),overflow:TextOverflow.clip,style: TextStyle(fontSize: 20),)),
            decoration: BoxDecoration(border: Border.all()),
-          ),onDoubleTap: () async{
+          ),onTap: () async{
             heading.add(values[layer_values[layer]].toString());
               if(layer==layer_values.length)
               {

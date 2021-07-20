@@ -32,9 +32,9 @@ class LocalNotificationsService{
       id, message.notification!.title, message.notification!.body, 
       NotificationDetails(
       android: AndroidNotificationDetails(
-          'easyapproach',    //channel id
-        'easyapproach_channel',//channel name
-        'this is chanel',//description
+        'Default',    //channel id
+        'Default',//channel name
+        'Default',//description
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,

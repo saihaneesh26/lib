@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart';
 import 'login.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:clipboard/clipboard.dart';
+
+
+
 
 class Upload extends StatelessWidget{
 
@@ -38,6 +41,7 @@ class UploadBody extends StatefulWidget{
 
 class UploadBodyState extends State<UploadBody>{
 
+    TextEditingController c = new TextEditingController();
     TextEditingController c1 = new TextEditingController();
   TextEditingController c2 = new TextEditingController();
     TextEditingController c3 = new TextEditingController();
@@ -46,10 +50,41 @@ class UploadBodyState extends State<UploadBody>{
   bool Isloading = false;
   var result;
   var type='';
+
   @override
   Widget build(BuildContext context) {
   return Isloading?Center(child: CircularProgressIndicator(),):SingleChildScrollView(
       child: Column(children: [
+        Container(
+          child: Row(children: [
+            Expanded(child:
+            TextField(
+             decoration: InputDecoration(labelText: 'Req Id',hintText: 'If requested'),
+            style: TextStyle(fontSize: 20),
+            controller: c,
+            )),
+            IconButton(icon:Icon(Icons.paste),onPressed: ()async{
+              await FlutterClipboard.paste().then((value) {
+                print(value);
+                setState(() {
+                c.text = value;
+              });
+              List<String> list = value.split('-');
+              List<String> seml = list[0].split('');
+              c1.text = seml[seml.length-2];
+              c2.text = list[0];
+              c3.text = list[3];
+              c4.text = list[2];
+              type = list[1];
+              });     
+
+            },),
+          ]),
+          padding: EdgeInsets.all(5),
+          margin: EdgeInsets.all(2),
+        
+          ),
+        SizedBox(height: 10,),
         Container(
           child: TextField(
             decoration: InputDecoration(labelText: 'Sem'),
@@ -64,9 +99,9 @@ class UploadBodyState extends State<UploadBody>{
         SizedBox(height: 10,),
         Container(
           child: TextField(
-             decoration: InputDecoration(labelText: 'Subject',hintText: 'IS**'),
+             decoration: InputDecoration(labelText: 'Subject',hintText: 'IS**/ISL**'),
             style: TextStyle(fontSize: 20),
-            maxLength: 4,
+            maxLength: 5,
             controller: c2,
             ),
           padding: EdgeInsets.all(5),
@@ -92,27 +127,27 @@ class UploadBodyState extends State<UploadBody>{
                 type=val.toString();
               });
             }),Text('QP'),SizedBox(width: 35,),
-            Radio(value: 'TB', groupValue: type, onChanged: (val){
+            Radio(value: 'Lab', groupValue: type, onChanged: (val){
               setState(() {
                 type=val.toString();
               });
-            }),Text('TB'),
+            }),Text('Lab'),
           ],
         ),
         SizedBox(height: 10,),
         type.toString()=='QP'?Container(
           child: TextField(
-             decoration: InputDecoration(labelText: 'QP Type',hintText: 'SEE/CIE'),
+             decoration: InputDecoration(labelText: 'QP Type',hintText: 'SEE/SUP/CIE1/CIE2'),
             style: TextStyle(fontSize: 20),
             controller: c4,
-            maxLength: 3,
+            maxLength: 4,
             ),
           padding: EdgeInsets.all(5),
           margin: EdgeInsets.all(2),
    // decoration: BoxDecoration(border: Border.all(width:2,color: Colors.blue)),
-        ):type.toString()=='TB'?Container(
+        ):type.toString()=='Lab'?Container(
           child: TextField(
-             decoration: InputDecoration(labelText: 'TB Name',hintText: 'name'),
+             decoration: InputDecoration(labelText: 'Lab QNo',hintText: 'QNo'),
             style: TextStyle(fontSize: 20),
             controller: c4,
             ),
@@ -126,7 +161,8 @@ class UploadBodyState extends State<UploadBody>{
             Isloading=true;
           });
           try{
-          result = await FilePicker.platform.pickFiles(allowMultiple: false,type: FileType.custom,allowedExtensions: ['pdf']);
+           
+         result = await FilePicker.platform.pickFiles(allowMultiple: false,type: FileType.custom,allowedExtensions: ['pdf']);
        }
        catch(e){
        //     print(e);
@@ -152,6 +188,27 @@ class UploadBodyState extends State<UploadBody>{
             Isloading=true;
           });
           var p='',temp_name='';
+          if(c.text.toString()!=''){
+            try{
+               await FirebaseDatabase.instance.reference().child('requests').once().then((snapshot){
+            var values = snapshot.value;
+            var keys = snapshot.value.keys;
+            for (var val in keys) {
+              print(val);
+              print(values[val]['id']);
+              if(c.text.toString()==values[val]['id'])
+              {
+                FirebaseDatabase.instance.reference().child('requests').child(val).update({
+                  'status':"Yes"
+                });
+              }
+            }
+          });
+            }catch(e){
+
+            }
+          }
+          
         if(type.toString()=='QP')
             {
               List<PlatformFile> files = result.files;
@@ -169,12 +226,11 @@ class UploadBodyState extends State<UploadBody>{
                   'sem':'sem-'+c1.text,
                   'subject':c2.text.toUpperCase().toString(),
                   'year':c3.text.toString(),
-                  'book_name':c4.text.toString(),
-                  'file_name':temp_name.toString()
+                  'file_name':temp_name.toString(),
+                  'type':c4.text.toString().toUpperCase(),
+                  'by':await FirebaseAuth.instance.currentUser!.email.toString()
                   });
-                  await FirebaseDatabase.instance.reference().child('requests').once().then((snapshot) {
-                    
-                  });
+                  
                   setState(() {
                     Isloading=false;
                   });
@@ -190,15 +246,17 @@ class UploadBodyState extends State<UploadBody>{
                 }
               });
             }
-            else if(type.toString()=='TB'){
+            else if(type.toString()=='Lab'){
               List<PlatformFile> files = result.files;
               files.forEach((element) async
               {
                 if(element.extension.toString()!='pdf')
                 {
- ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Select pdf only")));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Select pdf only")));
+                  setState(() {
+                    Isloading=false;
+                  });
                 }
-
                 else if(c1.text!=null&&c2.text!=null&&c3.text!=null&&c4.text!=null)
                { 
                  temp_name+=(c4.text+'-'+c1.text+' sem-'+c2.text+'-'+c3.text).toString();
@@ -208,10 +266,11 @@ class UploadBodyState extends State<UploadBody>{
                 await uploadTask.whenComplete((){
                 print("uploaded");
                });
-                await FirebaseDatabase.instance.reference().child("books").push().set({
+                await FirebaseDatabase.instance.reference().child("Lab").push().set({
                 'sem':c1.text,
                 'subject':c2.text.toString(),
-                'file_name':temp_name.toString()
+                'file_name':temp_name.toString(),
+                'by':await FirebaseAuth.instance.currentUser!.email.toString()
                 });
                 setState(() {
                     Isloading=false;
