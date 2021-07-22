@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:flutter_windowmanager/flutter_windowmanager.dart';
+
 
 
 // ignore: must_be_immutable
@@ -14,17 +16,52 @@ class PDFPAGE extends StatefulWidget{
   }
 }
 
+
+
 class PDFVIEWBODYState extends State<PDFPAGE>{
-  var link,name;
-  PDFVIEWBODYState(link,param){
+  
+ Future<void> secureScreen() async {
+   print("Secure");
+   try{
+ await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+ await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_FULLSCREEN); 
+   }catch(e)
+   {
+     print(e);
+   }
+   
+ }
+   PDFVIEWBODYState(link,param){
     this.name=param;
     this.link=link;
-  }
-  var _pdfViewerController;
-  void initState() 
-  {
+  } 
+  
+  void initState(){
     super.initState();
+    print("initState");
+    secureScreen();
+    
   }
+
+//   void init()async{
+//     print("init");
+//     await initScreenshotCallback();
+//   }
+// Future<void> initScreenshotCallback() async {
+//   print("funct");
+// final screenshotCallback = ScreenshotCallback();
+
+// screenshotCallback.addListener(() {
+//   setState(() {
+//     print("Screenshot callback Fired!");
+//   });
+// });
+// }
+
+var link,name;
+
+  var _pdfViewerController;
+
   var notification=null;
   @override
   Widget build(BuildContext context) {

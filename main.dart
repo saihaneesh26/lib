@@ -1,3 +1,4 @@
+import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:package_info/package_info.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -11,6 +12,8 @@ import 'pdfview.dart';
 import 'login.dart';
 import 'notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async{
   await Firebase.initializeApp();
@@ -26,6 +29,28 @@ Future <void> main() async{
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   var present_val = packageInfo.version.toString();
+  await FirebaseDatabase.instance.reference().child('MM').once().then((snapshot) {
+    print(snapshot.value);
+    HomeState.mm = snapshot.value.toString();
+  });
+try{
+  await NetworkInfo().getWifiName().then((value){
+    print(value.toString());
+    if(value.toString()!='null')
+    HomeState.info+="network: "+value.toString();
+  });
+  await NetworkInfo().getWifiBSSID().then((value){
+    print(value.toString());
+    if(value.toString()!='02:00:00:00:00:00')
+    HomeState.info+=" bssid:"+value.toString();
+  });
+  await NetworkInfo().getWifiIP().then((value){
+    print(value.toString());
+    HomeState.info+=" ip:"+value.toString();
+  });
+}catch(e){
+  print(e);
+}
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
                             var i =await _prefs;
                             var islogin = i.getBool('login');
@@ -129,7 +154,7 @@ this.sideval=val;
       },
       home: Scaffold(
         
-        drawer:DrawerWidget(context),
+       drawer: DrawerWidget(context),
         appBar: AppBar(
 
         actions: [],
@@ -155,10 +180,16 @@ class Home extends StatefulWidget{
 
 
 class HomeState extends State<Home>{
+
+   Future<void> secureScreen() async {
+    await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE); 
+ }
+
 var _dbref;
+static var mm = 'off';
 static bool update=false;
 var heading =[];
-static var url,i;
+static var url,info='';
 static var qps,lp ,req;
 static bool ag = false;
 static bool main_update=false;
@@ -169,6 +200,7 @@ static bool main_update=false;
       }
   void initState()
   {
+    secureScreen();
     super.initState();
       LocalNotificationsService.init(context);
     //init msg - gives msg and open app from termination
@@ -253,7 +285,7 @@ String funct()
 Widget build(context){
   Set a = {};
   bool v=false;var type;
-  return HomeState.ag==false?AlertDialog(
+  return HomeState.mm=='off'?HomeState.ag==false?AlertDialog(
     title: Text('Agreement & Privacy Policy'),
     content: Container(
       height: 300,
@@ -295,6 +327,9 @@ Widget build(context){
     ),
     ),
   ):Column(children: [
+    Container(
+      child: Text(HomeState.info.toString()),
+    ),
       layer!=1?Container(
         child: Row(children: [
           IconButton(onPressed: (){
@@ -376,7 +411,7 @@ Widget build(context){
       ),
       ),
     ],
-  );
+  ):Center(child: Text("Maintainence mode is on. Please Come back later"),);
 }
 
 }

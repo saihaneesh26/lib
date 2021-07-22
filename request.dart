@@ -109,9 +109,8 @@ class RequestBodyState extends State<RequestBody>{
       ],),
      )
     ),
- Expanded(child:  Container(
-     height: 40,
-     child: Text('Requested',style: TextStyle(fontSize: 40),)),
+  Container(
+        child: Text('Requested',style: TextStyle(fontSize: 40),),
       ),Expanded(child:Container(
         width: double.infinity,
         child:FirebaseAnimatedList(query: _dbref,itemBuilder: (BuildContext context,DataSnapshot snapshot,Animation animation,int index){

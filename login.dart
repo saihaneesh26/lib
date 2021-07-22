@@ -13,6 +13,11 @@ import 'request.dart';
 // ignore: non_constant_identifier_names
 Widget DrawerWidget(BuildContext context)
 {
+  if(HomeState.mm!='off')
+  {
+    return Container();
+  }
+  
   Map returnArea = {'QP':MyApp('QP'),'Lab':MyApp('Lab'),'Upload':Upload(),'Request':Request()};
   var list = ['QP','Lab','Request','Upload'];
   var icon = [Icons.question_answer,Icons.book,Icons.request_page_rounded,Icons.upload];
