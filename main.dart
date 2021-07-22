@@ -13,7 +13,7 @@ import 'login.dart';
 import 'notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-
+import 'package:permission_handler/permission_handler.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async{
   await Firebase.initializeApp();
@@ -33,21 +33,41 @@ Future <void> main() async{
     print(snapshot.value);
     HomeState.mm = snapshot.value.toString();
   });
+
+  await FirebaseDatabase.instance.reference().child('particular').once().then((value){
+    HomeState.particular = value.value.toString()=='false'?false:true;
+  });
+  await FirebaseDatabase.instance.reference().child('bssid').once().then((value) {
+    HomeState.bssid = value.value.toString();
+  });
+
 try{
-  await NetworkInfo().getWifiName().then((value){
-    print(value.toString());
-    if(value.toString()!='null')
-    HomeState.info+="network: "+value.toString();
-  });
-  await NetworkInfo().getWifiBSSID().then((value){
-    print(value.toString());
-    if(value.toString()!='02:00:00:00:00:00')
-    HomeState.info+=" bssid:"+value.toString();
-  });
-  await NetworkInfo().getWifiIP().then((value){
-    print(value.toString());
-    HomeState.info+=" ip:"+value.toString();
-  });
+  HomeState.location = false;
+ var a = await Permission.locationWhenInUse.status;
+if(a==PermissionStatus.granted){ 
+  print("granted");
+   HomeState.location = true;
+      await NetworkInfo().getWifiName().then((value){
+        print(value.toString());
+        if(value.toString()!='null')
+        HomeState.info+="network: "+value.toString();
+      });
+      await NetworkInfo().getWifiBSSID().then((value){
+        print(value.toString());
+        if(value.toString()!='02:00:00:00:00:00')
+        HomeState.info+=" bssid:"+value.toString();
+        HomeState.mybssid = value.toString();
+      });
+      await NetworkInfo().getWifiIP().then((value){
+        print(value.toString());
+        HomeState.info+=" ip:"+value.toString();
+      });
+}
+else{
+  openAppSettings();
+}
+    
+  
 }catch(e){
   print(e);
 }
@@ -190,6 +210,9 @@ static var mm = 'off';
 static bool update=false;
 var heading =[];
 static var url,info='';
+static var location = false;
+static var mybssid = '';
+static var bssid='',particular = false;
 static var qps,lp ,req;
 static bool ag = false;
 static bool main_update=false;
@@ -202,6 +225,8 @@ static bool main_update=false;
   {
     secureScreen();
     super.initState();
+
+   
       LocalNotificationsService.init(context);
     //init msg - gives msg and open app from termination
     FirebaseMessaging.instance.getInitialMessage().then((value) {
@@ -285,7 +310,32 @@ String funct()
 Widget build(context){
   Set a = {};
   bool v=false;var type;
-  return HomeState.mm=='off'?HomeState.ag==false?AlertDialog(
+
+  var error =''; var enter = false;
+  if(HomeState.particular==true && HomeState.location == false)
+  {
+    setState(() {
+      enter=false;
+      error='location access is denied';
+    });
+  }
+  else if((HomeState.particular==true && HomeState.bssid == HomeState.mybssid) || (HomeState.particular == false))
+  { 
+    setState(() {
+      enter = true;
+    });
+  }
+ else if(HomeState.mybssid != HomeState.bssid)
+ {
+   setState(() {
+     enter = false;
+     error ='connect to Proper netwrok here';
+   });
+ }
+
+  return 
+  enter==true?
+  HomeState.mm=='off'?HomeState.ag==false?AlertDialog(
     title: Text('Agreement & Privacy Policy'),
     content: Container(
       height: 300,
@@ -411,7 +461,10 @@ Widget build(context){
       ),
       ),
     ],
-  ):Center(child: Text("Maintainence mode is on. Please Come back later"),);
+  ):Center(child: Text("Maintainence mode is on. Please Come back later"),):
+  Center(child:TextButton(child: error=='location access is denied'?Text('$error\nGive permission here'):Text('$error'),onPressed: ()async{
+    openAppSettings();
+  }, ),);
 }
 
 }
