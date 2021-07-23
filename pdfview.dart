@@ -24,7 +24,7 @@ class PDFVIEWBODYState extends State<PDFPAGE>{
    print("Secure");
    try{
  await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
- await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_FULLSCREEN); 
+ //await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_FULLSCREEN); 
    }catch(e)
    {
      print(e);
