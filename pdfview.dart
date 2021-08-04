@@ -24,7 +24,6 @@ class PDFVIEWBODYState extends State<PDFPAGE>{
    print("Secure");
    try{
  await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
- //await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_FULLSCREEN); 
    }catch(e)
    {
      print(e);
@@ -42,21 +41,6 @@ class PDFVIEWBODYState extends State<PDFPAGE>{
     secureScreen();
     
   }
-
-//   void init()async{
-//     print("init");
-//     await initScreenshotCallback();
-//   }
-// Future<void> initScreenshotCallback() async {
-//   print("funct");
-// final screenshotCallback = ScreenshotCallback();
-
-// screenshotCallback.addListener(() {
-//   setState(() {
-//     print("Screenshot callback Fired!");
-//   });
-// });
-// }
 
 var link,name;
 

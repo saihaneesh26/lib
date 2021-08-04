@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:package_info/package_info.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -5,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:ritlibrary/About.dart';
 import 'package:ritlibrary/request.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +31,7 @@ Future <void> main() async{
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   var present_val = packageInfo.version.toString();
+  HomeState.version = present_val.toString();
   await FirebaseDatabase.instance.reference().child('MM').once().then((snapshot) {
     print(snapshot.value);
     HomeState.mm = snapshot.value.toString();
@@ -64,7 +67,19 @@ if(a==PermissionStatus.granted){
       });
 }
 else{
-  openAppSettings();
+  // openAppSettings();
+  AlertDialog(
+    title: Text('Location Access is Denied'),
+    content: Container(child: Text('To use this App, we need to access your location to get Network details.\nSo please provide Location access while using the app.'),),
+    actions: [
+      TextButton(onPressed: ()async{
+        openAppSettings();
+      }, child: Text('Open Settings')),
+      TextButton(onPressed: ()async{
+        SystemNavigator.pop();
+      }, child: Text('Close App')),
+    ],
+  );
 }
     
   
@@ -116,6 +131,10 @@ else{
                     });  
   
 var req=0;
+await FirebaseDatabase.instance.reference().child('About').once().then((snapshot) {
+  var values = snapshot.value;
+  AboutBodyState.value = values.toString();
+});
    await FirebaseDatabase.instance.reference().child('requests').onChildAdded.listen((event) { 
     var values = event.snapshot.value;
     req+=1;
@@ -201,21 +220,30 @@ class Home extends StatefulWidget{
 
 class HomeState extends State<Home>{
 
-   Future<void> secureScreen() async {
-    await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE); 
- }
+//    Future<void> secureScreen() async {
+//     await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE); 
+//  }
 
 var _dbref;
 static var mm = 'off';
 static bool update=false;
 var heading =[];
 static var url,info='';
+static var version;
 static var location = false;
 static var mybssid = '';
 static var bssid='',particular = false;
 static var qps,lp ,req;
 static bool ag = false;
 static bool main_update=false;
+ static var Islogin = false;
+  static var USN = '';
+  static var Name='';
+  var sem='null',subject='null';
+  Map layer_values = {1:"sem",2:"subject",3:"file_name"};
+  var layer = 1; //l1=>new_files
+  var val="null";
+  static var updateval = '';
     HomeState(val){
       _dbref = FirebaseDatabase.instance.reference().child(val.toString());
 
@@ -223,7 +251,7 @@ static bool main_update=false;
       }
   void initState()
   {
-    secureScreen();
+ 
     super.initState();
 
    
@@ -264,21 +292,9 @@ static bool main_update=false;
         print("null2");
       }
     });
-
-
-
-
   }//init state
 
-  //global
-  static var Islogin = false;
-  static var USN = '';
-  static var Name='';
-  var sem='null',subject='null';
-  Map layer_values = {1:"sem",2:"subject",3:"file_name"};
-  var layer = 1; //l1=>new_files
-  var val="null";
-  static var updateval = '';
+ 
   Future<SharedPreferences> login = SharedPreferences.getInstance();
   
  Future <void> data(String param)async{
@@ -339,11 +355,12 @@ Widget build(context){
     title: Text('Agreement & Privacy Policy'),
     content: Container(
       height: 300,
-      child:SingleChildScrollView(child: Text('Disclaimer:\nThe Content inside is only Education purpose only.\n The shared content is available in Public and RIT Library.\nThe information Provided inside may not be reliable and may be inaccurate.\nThe information is taken from respective writers and they are notified that this information is made public.\nThe information inside can be shared with others without any information to respective authors or Owners. So Use if wisely☺\n')),
+      child:SingleChildScrollView(child: Text('Disclaimer:\nThe Content inside is only Education purpose only.\n The shared content is available in Public and RIT Library.\nThe information Provided inside may not be reliable and may be inaccurate.\nThe information is taken from respective writers and they are notified that this information is made public.\nThe information inside can be shared with others without any information to respective authors or Owners. So Use it wisely☺\n')),
       ),
     actions: [
       TextButton(onPressed: (){
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("You cannot Continue to use this App unless you Accept")));
+     SystemNavigator.pop();
       }, child: Text("Reject")),
     TextButton(onPressed: ()async{
         Future<SharedPreferences> _p = SharedPreferences.getInstance();
@@ -377,9 +394,9 @@ Widget build(context){
     ),
     ),
   ):Column(children: [
-    Container(
+   HomeState.Islogin?Container(
       child: Text(HomeState.info.toString()),
-    ),
+    ):SizedBox(height: 0,),
       layer!=1?Container(
         child: Row(children: [
           IconButton(onPressed: (){

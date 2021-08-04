@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'main.dart';
 import 'upload.dart';
 import 'request.dart';
+import 'About.dart';
 // ignore: non_constant_identifier_names
 Widget DrawerWidget(BuildContext context)
 {
@@ -18,9 +19,9 @@ Widget DrawerWidget(BuildContext context)
     return Container();
   }
   
-  Map returnArea = {'QP':MyApp('QP'),'Lab':MyApp('Lab'),'Upload':Upload(),'Request':Request()};
-  var list = ['QP','Lab','Request','Upload'];
-  var icon = [Icons.question_answer,Icons.book,Icons.request_page_rounded,Icons.upload];
+  Map returnArea = {'QP':MyApp('QP'),'Lab':MyApp('Lab'),'Upload':Upload(),'Request':Request(),'About us':About()};
+  var list = ['QP','Lab','Request','Upload','About us'];
+  var icon = [Icons.question_answer,Icons.book,Icons.request_page_rounded,Icons.upload,Icons.person];
   return Container(
         child:Drawer(
           child: Container(
@@ -40,7 +41,7 @@ Widget DrawerWidget(BuildContext context)
                     Text("ISE LIBRARY",overflow: TextOverflow.clip,maxLines: 1,style: TextStyle(fontSize: 35),),
                     
                   ]),
-                 Text('welcome '+HomeState.USN.toString()+' '+HomeState.Name,overflow: TextOverflow.clip,maxLines: 2,style: TextStyle(fontSize: 15),),
+                 Text(HomeState.USN.toString()!=''&&HomeState.Name.toString()!=''?'welcome '+HomeState.USN.toString()+' '+HomeState.Name:'',overflow: TextOverflow.clip,maxLines: 2,style: TextStyle(fontSize: 15),),
                 ],),
                 width: double.infinity,
               //  height: 10,
@@ -78,12 +79,26 @@ Widget DrawerWidget(BuildContext context)
                 },
               ),
               ),
+              Container(
+                padding: EdgeInsets.all(3),
+                margin: EdgeInsets.all(2),
+                width:double.infinity,
+                height:20,
+                child:(Row(children: [
+                Icon(Icons.build_circle_sharp),
+                 SizedBox(width: 5,),
+                Text("Version: "+HomeState.version.toString()),
+              ],
+              )
+              ),
+              ),
               HomeState.main_update?TextButton(onPressed: ()async{
                 print(HomeState.url.toString());
                 await canLaunch(HomeState.url)?launch(HomeState.url):throw 'error something is wrong';
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('something is wrong')));
               }, child: Row(children: [
-                Icon(Icons.update),
+                Icon(Icons.update_outlined),
+                SizedBox(width: 5,),
                 Text("Update Available ${HomeState.updateval}")]
                 )
                 ):Text(""),
